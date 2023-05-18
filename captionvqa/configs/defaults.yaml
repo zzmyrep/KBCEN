@@ -1,0 +1,253 @@
+config_version: 1.0
+
+training:
+    trainer: captionvqa
+    seed: -1
+    experiment_name: run
+    max_updates: 22000
+    max_epochs: null
+    log_interval: 100
+    # Level of logging, only logs which are >= to current level will be logged
+    logger_level: info
+    # Log format: json, simple
+    log_format: simple
+    # Whether to log detailed final configuration parameters
+    log_detailed_config: false
+    should_not_log: false
+    # Whether the colored logs should be used
+    colored_logs: true
+    # Tensorboard control, by default tensorboard is disabled
+    tensorboard: false
+    # Enable torch.backends.cudnn.benchmark, by default it is disabled
+    cudnn_benchmark: false
+    # Weights and Biases control, by default Weights and Biases (wandb) is disabled
+    wandb:
+        # Whether to use Weights and Biases Logger, (Default: false)
+        enabled: false
+        entity: null
+        # Project name to be used while logging the experiment with wandb
+        project: captionvqa
+        # Experiment/ run name to be used while logging the experiment
+        # under the project with wandb
+        name: ${training.experiment_name}
+        # You can save your model checkpoints as W&B Artifacts for model versioning.
+        # Set the value to `true` to enable this feature.
+        log_checkpoint: false
+    batch_size: 32
+    batch_size_per_device: null
+    update_frequency: 1
+    num_workers: 4
+    fast_read: false
+    # Use in multi-tasking, when you want to sample tasks proportional to their sizes
+    dataset_size_proportional_sampling: true
+    # Whether to pin memory in dataloader
+    pin_memory: false
+    persistent_workers: true
+    checkpoint_interval: 1000
+    evaluation_interval: 1000
+    clip_gradients: false
+    clip_norm_mode: all
+
+    early_stop:
+        # Whether to use early stopping, (Default: false)
+        enabled: false
+        # Patience for early stoppings
+        patience: 4000
+        criteria: total_loss
+        minimize: true
+
+    # Should a lr scheduler be used
+    lr_scheduler: false
+
+    # DEPRECATED: Look at scheduler_attributes or
+    # Use PythiaScheduler directly instead
+    # Steps for LR scheduler, will be an array of iteration count
+    # when lr should be decreased
+    lr_steps: []
+    # DEPRECATED: Look at scheduler_attributes or
+    # Use PythiaScheduler directly instead
+    # Ratio for each lr step
+    lr_ratio: 0.1
+
+    # NOTE: Have a look at newer scheduler available in captionvqa (such as AdamW) before
+    # using these options
+    # Should use warmup for lr
+    use_warmup: false
+    # Warmup factor learning rate warmup
+    warmup_factor: 0.2
+    # Iteration until which warnup should be done
+    warmup_iterations: 1000
+
+    # Device on which the model will be trained. Set 'cpu' to train/infer on CPU
+    device: cuda
+    # Local rank of the GPU device
+    local_rank: null
+
+    # If verbose dump is active, captionvqa will dump dataset, model specific
+    # information which can be useful in debugging
+    verbose_dump: false
+
+    # Turn on if you want to ignore unused parameters in case of DDP
+    find_unused_parameters: false
+
+    # By default metrics evaluation is turned off during training. Set this to true
+    # to enable evaluation every log_interval number of updates
+    evaluate_metrics: false
+
+    # This will enable anomaly detection mode in PyTorch. Use this for debugging
+    # purposes if you see NaN issues in your experiments.
+    # Warning: As per PyTorch docs, this usually slows down your code and should
+    # only be used for debugging purposes
+    detect_anomaly: false
+
+    # FP16 support through torch.cuda.amp autocast and grad scaler.
+    # Set to true to activate fp16 for faster performance with negligible
+    # drop in results.
+    fp16: false
+
+    # Users can define their own callback functions in the trainer, e.g. adjust
+    # learning rate, plot data in tensorboard, etc.
+    # The format should look like:
+    # callbacks:
+    #   - type: my_callback
+    #     params:
+    #       foo: bar
+    callbacks: []
+
+    # check for NaNs in losses during training
+    # Set to true to look for NaNs in the losses and exit the training when NaN happens
+    exit_on_nan_losses: true
+
+trainer:
+    type: lightning
+    params:
+        gpus: 1
+        num_nodes: 1
+        precision: 32
+        deterministic: false
+        benchmark: false
+        max_steps: 22000
+        max_epochs: null
+        gradient_clip_val: 0.0
+        num_sanity_val_steps: 0
+        enable_checkpointing: true
+        accumulate_grad_batches: 1
+        val_check_interval: 1000
+        log_every_n_steps: 100
+        logger: false
+        limit_val_batches: 1.0
+        # progress bar is turned off if want same logging format as `captionvqa_trainer`
+        enable_progress_bar: False
+        resume_from_checkpoint: null
+
+# Configuration for evaluation
+evaluation:
+    # Metrics for evaluation
+    metrics: []
+    # Use CPU for metrics and other calculations, you can use this option if
+    # you see OOM in validation as in metrics are calculated globally
+    use_cpu: false
+    # Generate predictions in a file
+    predict: false
+    # Prediction file format (csv|json), default is json
+    predict_file_format: json
+    # Test reporter params. Defaults to type: file
+    reporter:
+        type: file
+        params: {}
+
+# Configuration for models, default configuration files for various models
+# included in captionvqa can be found under configs directory in root folder
+model_config: {}
+
+dataset_config: {}
+
+# Defines which datasets from the above tasks you want to train on
+datasets: []
+
+# Defines which model you want to train on
+model: null
+
+# Config file to be optionally passed by the user
+config: null
+run_type: train_inference
+
+# Configuration for optimizer, examples can be found in models' configs in
+# configs folder
+optimizer:
+
+    allow_unused_parameters: false
+    enable_state_sharding: false
+
+# Configuration for scheduler, examples can be found in models' configs
+scheduler: {}
+
+# Common environment configurations for captionvqa
+env:
+    cache_dir: ${resolve_cache_dir:captionvqa_CACHE_DIR}
+    dataset_zoo: ${env:captionvqa_DATASET_ZOO,configs/zoo/datasets.yaml}
+    model_zoo: ${env:captionvqa_MODEL_ZOO, configs/zoo/models.yaml}
+    data_dir: ${resolve_dir:captionvqa_DATA_DIR, data}
+
+    # Directory for saving checkpoints and other metadata
+    # Use captionvqa_SAVE_DIR or env.save_dir to override
+    save_dir: ${env:captionvqa_SAVE_DIR, ./save}
+
+    # Directory for saving logs, default is "logs" inside the save folder
+    # If log_dir is specifically passed, logs will be written inside that folder
+    # Use captionvqa_LOG_DIR or env.log_dir to override
+    log_dir: ${env:captionvqa_LOG_DIR,}
+
+    # Directory for saving reports, if not passed a opts based folder will be generated
+    # inside save_dir/reports and reports will be saved there
+    # Use captionvqa_REPORT_DIR or env.report_dir to override
+    report_dir: ${env:captionvqa_REPORT_DIR,}
+    tensorboard_logdir: ${env:captionvqa_TENSORBOARD_LOGDIR,}
+    wandb_logdir: ${env:captionvqa_WANDB_LOGDIR,}
+    user_dir: ${env:captionvqa_USER_DIR,}
+
+###
+# Configuration for the distributed setup
+distributed:
+    ###
+    # Typically tcp://hostname:port that will be used to establish initial connection
+    init_method: null
+    # Rank of the current worker
+    rank: 0
+    # Port number, not required if using init_method,
+    port: -1
+    # Backend for distributed setup
+    backend: nccl
+    # Total number of GPUs across all nodes (default: all visible GPUs)
+    world_size: ${device_count:}
+    # Set if you do not want spawn multiple processes even if
+    # multiple GPUs are visible
+    no_spawn: false
+
+
+checkpoint:
+    resume: false
+    resume_file: null
+    resume_best: false
+    resume_pretrained: false
+    resume_zoo: null
+    zoo_config_override: false
+    pretrained_state_mapping: {}
+    max_to_keep: -1
+
+    save_git_details: true
+
+    reset:
+        # Everything will be reset except the state_dict of model
+        all: false
+        # Optimizer specifically will be reset
+        optimizer: false
+        # All counts such as best_update, current_iteration etc will be reset
+        counts: false
+        fp16_scaler: false
+
+
+multitasking:
+    enabled: true
+    type: size_proportional
+    params: {}
